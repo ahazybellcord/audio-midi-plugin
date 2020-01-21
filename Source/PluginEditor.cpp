@@ -15,17 +15,19 @@
 HelloWorldAudioProcessorEditor::HelloWorldAudioProcessorEditor (HelloWorldAudioProcessor& p)
     : AudioProcessorEditor (&p), processor (p)
 {
-    setSize (400, 400);
+    setSize (200, 200);
     
-    midiVolume.setSliderStyle(Slider::ThreeValueHorizontal);
-    midiVolume.setRange(0.0, 127.0, 1.0);
-    midiVolume.setTextBoxStyle(Slider::TextBoxBelow, false, 100, 20);
-    midiVolume.setPopupDisplayEnabled(true, true, this);
-    midiVolume.setTextValueSuffix(" Volume");
+    midiVolume.setSliderStyle (Slider::LinearBarVertical);
+    midiVolume.setRange (0.0, 127.0, 1.0);
+    midiVolume.setTextBoxStyle (Slider::NoTextBox, false, 100, 20);
+    midiVolume.setPopupDisplayEnabled (true, true, this);
+    midiVolume.setTextValueSuffix (" Volume");
     
-    midiVolume.setMinMaxAndCurrentValues(0.0, 127.0, 64.0);
-    midiVolume.setBounds(20, 20, getWidth() - 40, 30);
-    addAndMakeVisible(&midiVolume);
+    midiVolume.setValue (64.0);
+    midiVolume.setBounds (40, 30, 20, getHeight() - 60);
+    addAndMakeVisible (&midiVolume);
+    
+    midiVolume.addListener (this);
 }
 
 HelloWorldAudioProcessorEditor::~HelloWorldAudioProcessorEditor()
@@ -46,4 +48,9 @@ void HelloWorldAudioProcessorEditor::paint (Graphics& g)
 void HelloWorldAudioProcessorEditor::resized()
 {
     midiVolume.setBounds(40, 30, 20, getHeight() - 60);
+}
+
+void HelloWorldAudioProcessorEditor::sliderValueChanged (Slider *slider)
+{
+    processor.setNoteOnVel (midiVolume.getValue());
 }
