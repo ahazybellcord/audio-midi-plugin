@@ -56,12 +56,19 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
     
     //==============================================================================
-    float getNoteOnVel() { return noteOnVel; }
-    void setNoteOnVel(float newNoteOnVel) { noteOnVel = newNoteOnVel; }
-
+    int getNoteOnVel() { return vel->get(); }
+    void setNoteOnVel (float newVel) { *vel = newVel; }
+    
+    float getAudioGain() { return gain->get(); }
+    void setAudioGain (float newAudioGain) { *gain = newAudioGain; }
+    
+    bool getShouldBePlaying() { return shouldBePlaying; }
+    
 private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HelloWorldAudioProcessor)
     
-    float noteOnVel;
+    AudioParameterInt* vel;
+    AudioParameterFloat* gain;
+    bool shouldBePlaying;
 };
