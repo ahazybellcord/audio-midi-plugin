@@ -56,13 +56,12 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
     
     //==============================================================================
-    int getNoteOnVel() { return vel->get(); }
-    void setNoteOnVel (float newVel) { *vel = newVel; }
+    double getVideoSpeed() { return videoSpeed; }
     
-    float getAudioGain() { return gain->get(); }
-    void setAudioGain (float newAudioGain) { *gain = newAudioGain; }
-    
-    bool getShouldBePlaying() { return shouldBePlaying; }
+    bool getShouldBePlaying(int index)
+    {
+        return (index < 0 || index > 127) ? false : shouldBePlaying[index];
+    }
     
 private:
     //==============================================================================
@@ -70,5 +69,7 @@ private:
     
     AudioParameterInt* vel;
     AudioParameterFloat* gain;
-    bool shouldBePlaying;
+    
+    bool shouldBePlaying[128] = {false};
+    double videoSpeed = 1.0;
 };

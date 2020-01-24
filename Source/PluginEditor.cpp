@@ -13,41 +13,14 @@
 
 //==============================================================================
 HelloWorldAudioProcessorEditor::HelloWorldAudioProcessorEditor (HelloWorldAudioProcessor& p)
-    : AudioProcessorEditor (&p), processor (p), video (true)
+    : AudioProcessorEditor (&p), processor (p), videoPlayer (true)
 {
-    setSize (400, 400);
-    
-    /* MIDI velocity limiter */
-    midiVolume.setSliderStyle (Slider::LinearBarVertical);
-    midiVolume.setRange (0.0, 127.0, 1.0);
-    midiVolume.setTextBoxStyle (Slider::NoTextBox, false, 100, 20);
-    midiVolume.setPopupDisplayEnabled (true, true, this);
-    midiVolume.setTextValueSuffix (" Velocity");
-    
-    midiVolume.setValue (64.0);
-    midiVolume.setBounds (40, 30, 20, getHeight() - 60);
-    addAndMakeVisible (&midiVolume);
-    
-    midiVolume.addListener (this);
-    
-    /* Audio gain */
-    audioGain.setSliderStyle (Slider::LinearBarVertical);
-    audioGain.setRange (0.0, 1.0, 0.01);
-    audioGain.setTextBoxStyle (Slider::NoTextBox, false, 100, 20);
-    audioGain.setPopupDisplayEnabled (true, true, this);
-    audioGain.setTextValueSuffix (" Gain");
-    
-    audioGain.setValue (1.0);
-    audioGain.setBounds (80, 30, 20, getHeight() - 60);
-    addAndMakeVisible (audioGain);
-    
-    audioGain.addListener (this);
-    
+    setSize (1000, 800);
+   
     /* Video playback */
-    video.setEnabled (true);
-    video.setBounds (0, 0, getWidth(), getHeight());
-    video.load (File(videoFilePath));
-    addAndMakeVisible (video);
+    videoPlayer.setEnabled (true);
+    videoPlayer.setBounds (0, 0, getWidth(), getHeight());
+    addAndMakeVisible (videoPlayer);
     
     /* Video playback timer */
     startTimer (timerInterval);
@@ -55,10 +28,7 @@ HelloWorldAudioProcessorEditor::HelloWorldAudioProcessorEditor (HelloWorldAudioP
 
 HelloWorldAudioProcessorEditor::~HelloWorldAudioProcessorEditor()
 {
-    if (video.isPlaying())
-        video.stop();
-    if (video.isVideoOpen())
-        video.closeVideo();
+    stopPlaybackAndCloseVideo();
 }
 
 //==============================================================================
@@ -67,34 +37,61 @@ void HelloWorldAudioProcessorEditor::paint (Graphics& g)
     g.fillAll (Colours::white);
     g.setColour (Colours::black);
     g.setFont (15.0f);
-    g.drawFittedText ("Midi Volume", 0, 0, getWidth(), 30, Justification::centred, 1);
+    g.drawFittedText ("Midi Video Keyboard", 0, 0, getWidth(), 30, Justification::centred, 1);
 }
 
 void HelloWorldAudioProcessorEditor::resized()
 {
-    midiVolume.setBounds(40, 30, 20, getHeight() - 60);
-}
-
-void HelloWorldAudioProcessorEditor::sliderValueChanged (Slider *slider)
-{
-    if (slider == &midiVolume)
-    {
-        processor.setNoteOnVel (midiVolume.getValue());
-    }
-    else if (slider == &audioGain)
-    {
-        processor.setAudioGain (audioGain.getValue());
-    }
 }
 
 void HelloWorldAudioProcessorEditor::timerCallback() {
-    if (processor.getShouldBePlaying() && !video.isPlaying())
+    for (int index = 0; index < 128; index++)
     {
-        video.play();
-    }
+        // Break in each case so we deal with only one event at a time.
+        if (processor.getShouldBePlaying(index) && !videoIsPlaying[index])
+        {
+            char videoFileName[100];
+            snprintf(videoFileName, 100, "%s/%d.mov", videoFileDir, index);
+            
+            stopPlaybackAndCloseVideo();
+            videoPlayer.load(File(videoFileName));
+            videoPlayer.setPlaySpeed(processor.getVideoSpeed());
+            videoPlayer.play();
+            
+            videoIsPlaying[index] = true;
+            break;
+        }
 
-    if (!processor.getShouldBePlaying() && video.isPlaying())
-    {
-        video.stop();
+        if (!processor.getShouldBePlaying(index) && videoIsPlaying[index])
+        {
+            stopPlaybackAndCloseVideo();
+            
+            videoIsPlaying[index] = false;
+            break;
+        }
     }
+    
+    // Loop playback.
+    if (videoPlayer.isVideoOpen() && !videoPlayer.isPlaying())
+        videoPlayer.play();
+}
+
+void HelloWorldAudioProcessorEditor::stopPlaybackAndCloseVideo()
+{
+    if (videoPlayer.isPlaying())
+        videoPlayer.stop();
+    if (videoPlayer.isVideoOpen())
+        videoPlayer.closeVideo();
+}
+
+void HelloWorldAudioProcessorEditor::resizeToVideoDimensions()
+{
+    if (!videoPlayer.isVideoOpen())
+        return;
+    
+    auto dimensions = videoPlayer.getVideoNativeSize();
+    int x = dimensions.getX();
+    int y = dimensions.getY();
+    if (x > 0 && y > 0)
+        setSize (x, y);
 }

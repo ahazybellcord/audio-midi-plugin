@@ -24,9 +24,6 @@ HelloWorldAudioProcessor::HelloWorldAudioProcessor()
                        )
 #endif
 {
-    addParameter (gain = new AudioParameterFloat ("gain", "Gain", 0.0f, 1.0f, 1.0f));
-    addParameter (vel = new AudioParameterInt ("velocity", "Velocity", 0, 127, 64));
-    shouldBePlaying = false;
 }
 
 HelloWorldAudioProcessor::~HelloWorldAudioProcessor()
@@ -134,34 +131,29 @@ bool HelloWorldAudioProcessor::isBusesLayoutSupported (const BusesLayout& layout
 
 void HelloWorldAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer& midiMessages)
 {
-    buffer.applyGain (*gain);
-    
     MidiMessage message;
     int time;
-    
-    MidiBuffer processedMidi;
-    
+    int noteNumber;
+
     for (MidiBuffer::Iterator it (midiMessages); it.getNextEvent (message, time);)
     {
-        std::cout << message.getDescription().toStdString() << std::endl;
+        noteNumber = message.getNoteNumber();
         
         switch (message.getEventType()) {
             case MidiMessage::midiEventNoteOn:
             {
-                shouldBePlaying = true;
+                shouldBePlaying[noteNumber] = true;
+                int velocity = message.getVelocity();
+                videoSpeed = jmap ((double) velocity, 0.0, 128.0, 0.25, 4.0);
                 break;
             }
-            case juce::MidiMessage::midiEventNoteOff:
+            case MidiMessage::midiEventNoteOff:
             {
-                shouldBePlaying = false;
+                shouldBePlaying[noteNumber] = false;
                 break;
             }
         }
-        
-        processedMidi.addEvent (message, time);
     }
-    
-    midiMessages.swapWith (processedMidi);
 }
 
 //==============================================================================

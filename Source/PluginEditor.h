@@ -17,7 +17,6 @@
 /**
 */
 class HelloWorldAudioProcessorEditor  : public AudioProcessorEditor,
-                                        private Slider::Listener,
                                         public Timer
 {
 public:
@@ -31,19 +30,16 @@ public:
 
 private:
     HelloWorldAudioProcessor& processor;
-    
-    Slider midiVolume;
-    Slider audioGain;
-    
-    const int timerInterval = 100; // milliseconds
-    
-    VideoComponent video;
-    const char *videoFilePath = "/Users/zl/Desktop/OnA steve remaster.mov";
-    
-    bool videoPlaying = false;
-    bool videoIsLoaded = false;
 
-    void sliderValueChanged (Slider *slider) override;
+    const int timerInterval = 100; // timer tick interval in milliseconds
+    
+    VideoComponent videoPlayer;
+    const char *videoFileDir = "/Users/zl/projects/juce/video_test";
+    bool videoIsPlaying[128] = {false};
+    bool videoIsLoaded[128] = {false};
+
+    void stopPlaybackAndCloseVideo();
+    void resizeToVideoDimensions();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HelloWorldAudioProcessorEditor)
 };
